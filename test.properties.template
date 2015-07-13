@@ -1,0 +1,5 @@
+URL1=www.google.com
+URL1_HEADERS="Authorization: Token token=\"123\""
+
+URL2=www.google-test.com
+URL2_HEADERS="Authorization: Token token=\"123\""
