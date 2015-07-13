@@ -63,6 +63,7 @@ def compare_url endpoint, properties
     puts "difference found"
     write_diff endpoint, diff
   elsif control.nil? and experiment.nil? or control.empty? and experiment.empty?
+    puts "Nil or blanks detected"
     write_diff endpoint, "Nil or blanks detected"
   end
 rescue Exception => e
