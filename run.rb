@@ -33,10 +33,12 @@ def log_with_timing(section_name)
 end
 
 def get server, endpoint
-    HTTParty.get("#{server['url']}#{endpoint}",{
-      query: endpoint,
-      headers: server['headers']
-    })
+  url = "#{server['url']}#{endpoint}"
+  puts "hitting #{url}"
+  HTTParty.get(url,{
+    query: endpoint,
+    headers: server['headers']
+  })
 end
 
 def write_data filename, data
@@ -51,19 +53,27 @@ def write_diff endpoint, diff
   write_data "#{RESULTS_DIR}/results.diff", data
 end
 
-def execute_against_urls endpoints, properties
+def compare_url endpoint, properties
+  control = get(properties['control'],endpoint)
+  experiment = get(properties['experiment'],endpoint)
 
-  endpoints.each do |endpoint|
-    puts "hitting #{endpoint}"
-    control = get(properties['control'],endpoint)
-    experiment = get(properties['experiment'],endpoint)
-    experiment = "foo"
-    diff = Diffy::Diff.new(control, experiment)
-    if diff.to_s != ""
-      write_diff endpoint, diff
-    end
+  diff = Diffy::Diff.new(control, experiment)
+
+  if diff.to_s != ""
+    puts "difference found"
+    write_diff endpoint, diff
+  elsif control.nil? and experiment.nil? or control.empty? and experiment.empty?
+    write_diff endpoint, "Nil or blanks detected"
   end
+rescue Exception => e
+  puts "Error hitting endpoint: #{endpoint}"
+  puts e.message
+end
 
+def execute_against_urls endpoints, properties
+  endpoints.each do |endpoint|
+    compare_url endpoint, properties
+  end
 end
 
 ## Main
