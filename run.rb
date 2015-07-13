@@ -6,12 +6,17 @@ require 'diffy'
 
 ENDPOINTS_FILE='endpoints.txt'
 PROPERTIES_FILE='test.yaml'
+RESULTS_DIR='results'
 
 def read_file file
   File.readlines(file)
     .map {|r| r.strip }
     .reject {|r| r.empty?}
     .reject {|r| r.start_with?('#')}
+end
+
+def cleanup_results
+  FileUtils.rm_rf(RESULTS_DIR)
 end
 
 def read_properties
@@ -43,12 +48,13 @@ end
 def write_diff endpoint, diff
   FileUtils.mkdir_p "results"
   data = "#{endpoint}\n\n#{diff}\n"
-  write_data 'results/results.diff', data
+  write_data "#{RESULTS_DIR}/results.diff", data
 end
 
 def execute_against_urls endpoints, properties
 
   endpoints.each do |endpoint|
+    puts "hitting #{endpoint}"
     control = get(properties['control'],endpoint)
     experiment = get(properties['experiment'],endpoint)
     experiment = "foo"
@@ -62,6 +68,7 @@ end
 
 ## Main
 
+cleanup_results
 properties = read_properties
 endpoints = read_file(ENDPOINTS_FILE)
 execute_against_urls(endpoints, properties)
