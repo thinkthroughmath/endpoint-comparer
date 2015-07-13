@@ -42,7 +42,7 @@ def get server, endpoint
 end
 
 def write_data filename, data
-  File.open(filename, 'w') do |file|
+  File.open(filename, 'a') do |file|
     file.write(data)
   end
 end
