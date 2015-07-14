@@ -3,6 +3,7 @@
 require 'yaml'
 require 'httparty'
 require 'diffy'
+require 'benchmark'
 
 ENDPOINTS_FILE='endpoints.txt'
 PROPERTIES_FILE='test.yaml'
@@ -32,13 +33,24 @@ def log_with_timing(section_name)
   value
 end
 
-def get server, endpoint
+def get which, server, endpoint
   url = "#{server['url']}#{endpoint}"
-  puts "hitting #{url}"
-  HTTParty.get(url,{
-    query: endpoint,
-    headers: server['headers']
-  })
+
+  puts "\t#{which}:\tGET #{url}"
+  response = ''
+
+  t = Benchmark.realtime do
+    response = HTTParty.get(url,{
+      query: endpoint,
+      headers: server['headers']
+    })
+  end
+
+  puts "\t\t\t[#{sprintf('%02.3f', t)} sec]"
+  results = JSON.pretty_generate(response)
+rescue Exception => e
+  puts "\tError!"
+  raise
 end
 
 def write_data filename, data
@@ -54,21 +66,31 @@ def write_diff endpoint, diff
 end
 
 def compare_url endpoint, properties
-  control = get(properties['control'],endpoint)
-  experiment = get(properties['experiment'],endpoint)
+  puts ""
+  puts ""
+  puts "Testing #{endpoint}..."
+
+  experiment = get('experiment', properties['experiment'],endpoint)
+  control    = get('control',    properties['control'],   endpoint)
+
+  if control.nil? and experiment.nil? or control.empty? and experiment.empty?
+    puts "Nil or blanks detected"
+    write_diff endpoint, "Nil or blanks detected"
+    return
+  end
 
   diff = Diffy::Diff.new(control, experiment)
 
   if diff.to_s != ""
-    puts "difference found"
+    puts "\tDifferent!"
     write_diff endpoint, diff
-  elsif control.nil? and experiment.nil? or control.empty? and experiment.empty?
-    puts "Nil or blanks detected"
-    write_diff endpoint, "Nil or blanks detected"
+  else
+    puts "\tOK."
   end
 rescue Exception => e
-  puts "Error hitting endpoint: #{endpoint}"
-  puts e.message
+  puts "\tError!"
+  puts e
+  write_diff endpoint, 'ERROR'
 end
 
 def execute_against_urls endpoints, properties
