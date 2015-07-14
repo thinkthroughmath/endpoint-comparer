@@ -93,6 +93,13 @@ rescue Exception => e
   write_diff endpoint, 'ERROR'
 end
 
+def filter_endpoints(endpoints, pattern)
+  return endpoints unless pattern
+
+  pattern = Regexp.new(pattern)
+  endpoints.select { |e| pattern.match(e) }
+end
+
 def execute_against_urls endpoints, properties
   endpoints.each do |endpoint|
     compare_url endpoint, properties
@@ -104,4 +111,5 @@ end
 cleanup_results
 properties = read_properties
 endpoints = read_file(ENDPOINTS_FILE)
+endpoints = filter_endpoints(endpoints, ARGV[0])
 execute_against_urls(endpoints, properties)
