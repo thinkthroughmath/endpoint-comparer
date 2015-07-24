@@ -70,8 +70,8 @@ def compare_url endpoint, properties
   puts ""
   puts "Testing #{endpoint}..."
 
-  experiment = get('experiment', properties['experiment'],endpoint)
   control    = get('control',    properties['control'],   endpoint)
+  experiment = get('experiment', properties['experiment'],endpoint)
 
   if control.nil? and experiment.nil? or control.empty? and experiment.empty?
     puts "Nil or blanks detected"
